@@ -1,0 +1,4 @@
+```
+docker volume create mongodb_data
+docker run -d --name mongodb -p 27017:27017 -v mongodb_data:/data/db mongo
+```
