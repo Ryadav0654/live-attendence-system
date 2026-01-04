@@ -1,8 +1,8 @@
 import type { NextFunction } from "express";
-import type { IRequest } from "./verifyToken.js";
+import type { IRequest } from "../types/type.js";
 import { AppError } from "../utils/appError.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
-import { ROLE } from "../models/user.model.js";
+import { ROLE } from "../types/type.js";
 
 export const isTeacher = asyncHandler(
   async (req: IRequest, _res: Response, next: NextFunction) => {

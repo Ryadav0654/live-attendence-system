@@ -1,11 +1,14 @@
 import type { Response } from "express";
-import type { IRequest } from "../middleware/verifyToken.js";
+import type { IRequest } from "../types/type.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { createClassZodSchema } from "../validation/zod.validation.js";
 import Class from "../models/class.model.js";
 import { AppError } from "../utils/appError.js";
 import z from "zod";
-import User, { ROLE } from "../models/user.model.js";
+import User from "../models/user.model.js";
+import Attendance from "../models/attendance.model.js";
+import { Types } from "mongoose";
+import { ROLE } from "../types/type.js";
 
 export const createClass = asyncHandler(
   async (req: IRequest, res: Response) => {
@@ -14,7 +17,7 @@ export const createClass = asyncHandler(
 
     const createdClass = await Class.create({
       className,
-      teacherId,
+      teacherId: new Types.ObjectId(teacherId),
     });
 
     return res.status(201).json({
@@ -88,6 +91,38 @@ export const getClass = asyncHandler(async (req: IRequest, res: Response) => {
   });
 });
 
-export const getClassAttendence = asyncHandler(
-  async (req: IRequest, res: Response) => {}
+export const getClassAttendance = asyncHandler(
+  async (req: IRequest, res: Response) => {
+    const classId = req.params.id;
+
+    if (!classId) {
+      throw new AppError("Class id is required", 400);
+    }
+    const { userId } = req.user;
+
+    const attendance = await Attendance.findOne({
+      classId: new Types.ObjectId(classId),
+      studentId: new Types.ObjectId(userId),
+    }).select("-__v");
+
+    // if attendance not exists
+    if (!attendance) {
+      return res.status(200).json({
+        success: true,
+        data: {
+          classId,
+          status: null,
+        },
+      });
+    }
+
+    // ✅ Attendance exists
+    return res.status(200).json({
+      success: true,
+      data: {
+        classId,
+        status: attendance.status,
+      },
+    });
+  }
 );

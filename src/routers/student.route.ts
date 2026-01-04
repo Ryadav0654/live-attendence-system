@@ -4,6 +4,6 @@ import { isTeacher } from "../middleware/checkRole.js";
 
 const router: Router = Router();
 
-router.get("/students", isTeacher, getStudents);
+router.get("/", isTeacher, getStudents);
 
 export default router;

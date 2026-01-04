@@ -2,14 +2,7 @@ import type { Request, Response, NextFunction } from "express";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { AppError } from "../utils/appError.js";
 import jwt, { type JwtPayload } from "jsonwebtoken";
-import User, { type ROLE } from "../models/user.model.js";
-
-export interface IRequest extends Request {
-  user: {
-    userId: string;
-    role: ROLE;
-  };
-}
+import type { IRequest } from "../types/type.js";
 
 const verifyToken = asyncHandler(
   async (req: IRequest, _res: Response, next: NextFunction) => {

@@ -15,3 +15,7 @@ export const loginZodSchema = z.object({
 export const createClassZodSchema = z.object({
   className: z.string("ClassName must be string"),
 });
+
+export const attendanceZodSchema = z.object({
+  classId: z.string(),
+});

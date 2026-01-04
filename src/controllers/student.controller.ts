@@ -1,7 +1,8 @@
 import type { Response } from "express";
-import type { IRequest } from "./../middleware/verifyToken.js";
+import type { IRequest } from "../types/type.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
-import User, { ROLE } from "../models/user.model.js";
+import User from "../models/user.model.js";
+import { ROLE } from "../types/type.js";
 
 export const getStudents = asyncHandler(
   async (req: IRequest, res: Response) => {

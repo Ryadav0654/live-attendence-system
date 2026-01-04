@@ -1,14 +1,14 @@
 import dotenv from "dotenv";
 dotenv.config();
-import app from "./app.js";
+import server from "./app.js";
 import connectDB from "./lib/db.js";
 
-const PORT: string | number = process.env.PORT || 8080;
+const PORT = process.env.PORT || 8080;
 
 (async () => {
   try {
     await connectDB();
-    app.listen(PORT, () => {
+    server.listen(PORT, () => {
       console.log(`server is listening at ${PORT}`);
     });
   } catch (err) {

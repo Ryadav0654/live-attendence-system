@@ -1,10 +1,5 @@
 import { Schema, model, Types } from "mongoose";
-
-export interface IClass {
-  className: string;
-  teacherId: Types.ObjectId;
-  studentIds: Types.ObjectId[];
-}
+import type { IClass } from "../types/type.js";
 
 const classSchema = new Schema<IClass>(
   {

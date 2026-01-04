@@ -1,69 +1,49 @@
 # Live Attendance System – Backend
 
-A backend service for a **Live Attendance System** built with **Node.js, Express, TypeScript, MongoDB, and JWT authentication**.  
-The system supports **role-based access control (RBAC)** for **Teachers** and **Students**, class management, and secure authentication.
+> A **secure, real-time backend system** for managing live classroom attendance, built with **Node.js, Express, TypeScript, MongoDB, JWT**, and **WebSockets**.
+
+This project demonstrates **production-style backend engineering**, including **authentication**, **role-based authorization**, **real-time communication**, and **data persistence**, designed with clear trade-offs and scalability in mind.
+
+## Highlights
+
+- **JWT-based authentication** with role-aware authorization
+- **Role-Based Access Control (RBAC)** for Teachers & Students
+- **Class management** with ownership and enrollment enforcement
+- **Real-time attendance tracking** using WebSockets
+- **Reliable persistence** of attendance data in MongoDB
+- **Strict validation & error handling** using Zod and custom middleware
+- **Clean, modular architecture** with TypeScript strict mode
+
+## Tech Stack
+
+| Category        | Technologies         |
+| --------------- | -------------------- |
+| Backend Runtime | Node.js              |
+| Web Framework   | Express              |
+| Language        | TypeScript           |
+| Database        | MongoDB + Mongoose   |
+| Real-Time       | WebSockets (`ws`)    |
+| Authentication  | JWT (`jsonwebtoken`) |
+| Validation      | Zod                  |
+| Security        | bcrypt               |
+
+## System Overview
+
+- **HTTP (Express)**
+  Used for authentication, class management, and attendance session control.
+
+- **WebSockets**
+  Used for live attendance updates and real-time communication.
+
+- **In-Memory Session**
+  Attendance is tracked live in memory and persisted only when the session ends.
+
+- **MongoDB**
+  Serves as the source of truth for users, classes, and attendance records.
 
 ---
 
-## 🚀 Features
-
-- 🔐 JWT-based authentication (Access tokens)
-- 👥 Role-based access control (Teacher / Student)
-- 🏫 Class management
-  - Teachers can create classes
-  - Teachers can add students to their classes
-  - Students can access only enrolled classes
-- 📦 Secure password handling (bcrypt + `select: false`)
-- ✅ Request validation using **Zod**
-- 🛡️ Centralized error handling
-- 🧠 Clean architecture (middlewares, controllers, models)
-
----
-
-## 🧱 Tech Stack
-
-- **Node.js**
-- **Express**
-- **TypeScript**
-- **MongoDB + Mongoose**
-- **JWT (jsonwebtoken)**
-- **Zod** – request validation
-- **bcryptjs** – password hashing
-
----
-
-## 📁 Project Structure
-
-```
-
-src/
-├── app.ts
-├── index.ts
-├── lib/
-│   └── db.ts
-├── controllers/
-│   ├── auth.controller.ts
-│   ├── user.controller.ts
-│   └── class.controller.ts
-├── middleware/
-│   ├── verifyToken.ts
-│   └── asyncHandler.ts
-├── models/
-│   ├── user.model.ts
-│   └── class.model.ts
-├── utils/
-│   ├── appError.ts
-│   └── asyncHandler.ts
-├── routes/
-│   ├── auth.routes.ts
-│   ├── user.routes.ts
-│   └── class.routes.ts
-└── validators/
-└── zodSchemas.ts
-
-```
-
-## 🔐 Authentication & Authorization
+## Authentication & Authorization
 
 ### Roles
 
@@ -74,30 +54,117 @@ enum ROLE {
 }
 ```
 
-### Access Rules
+### Access Control Matrix
 
-| Action               | Teacher             | Student          |
-| -------------------- | ------------------- | ---------------- |
-| Create class         | ✅                  | ❌               |
-| Add student to class | ✅ (own class only) | ❌               |
-| View class           | ✅ (own class)      | ✅ (if enrolled) |
-| Get all students     | ✅                  | ❌               |
+| Action              | Teacher        | Student       |
+| ------------------- | -------------- | ------------- |
+| Create class        | ✅             | ❌            |
+| Add students        | ✅ (own class) | ❌            |
+| View class          | ✅ (own)       | ✅ (enrolled) |
+| Start attendance    | ✅             | ❌            |
+| View own attendance | ❌             | ✅            |
 
----
+Authorization is **resource-based**, not token-based.
 
-## 🔑 Authentication Flow
+## Real-Time Attendance Design
 
-1. User signs up
-2. Password is hashed using bcrypt
-3. JWT token is issued on login
-4. Token is verified via `verifyToken` middleware
-5. Role & ownership checks are enforced per route
+### Key Assumption
 
----
+> Only **one active attendance session** can exist at a time.
 
-## 🛠️ Environment Variables
+This simplifies WebSocket logic and ensures correctness for an MVP or interview-grade system.
 
-Create a `.env` file in the root:
+### Attendance Lifecycle
+
+1. Teacher starts a session (`POST /attendance/start`)
+2. Attendance is tracked **live in memory**
+3. Students receive real-time updates via WebSockets
+4. Teacher finalizes session (`DONE`)
+5. Attendance is persisted to MongoDB
+6. Session state is cleared
+
+## Project Structure
+
+```
+src/
+├── app.ts
+├── index.ts
+├── lib/db.ts
+├── controllers/
+│   ├── auth.controller.ts
+│   ├── class.controller.ts
+│   ├── user.controller.ts
+│   └── attendance.controller.ts
+├── types/
+│   |__ type.ts
+├── middleware/
+│   ├── verifyToken.ts
+│   └── asyncHandler.ts
+├── models/
+│   ├── user.model.ts
+│   ├── class.model.ts
+│   └── attendance.model.ts
+├── routes/
+│   ├── auth.routes.ts
+│   ├── class.routes.ts
+│   ├── user.routes.ts
+│   └── attendance.routes.ts
+├── utils/
+│   ├── appError.ts
+│   └── asyncHandler.ts
+    └── AttendanceSession.ts
+└── validators/
+    └── zodSchemas.ts
+```
+
+## Authentication Flow
+
+1. User signs up → password hashed with bcrypt
+2. User logs in → JWT issued
+3. Token verified via middleware or WebSocket handshake
+4. Role & ownership checks enforced per request/event
+
+## API Overview
+
+### Auth
+
+- `POST /auth/signup`
+- `POST /auth/login`
+- `GET /users/me`
+
+### Users
+
+- `GET /users/students` → Teacher only
+
+### Classes
+
+- `POST /class` → Create class (Teacher)
+- `GET /class/:id` → Teacher (owner) / Student (enrolled)
+- `POST /class/:id/add-student` → Teacher (owner)
+
+### Attendance
+
+- `POST /attendance/start` → Start live session (Teacher)
+- `GET /class/:id/my-attendance` → Student attendance status
+
+## Error Handling Strategy
+
+- Centralized `AppError` abstraction
+- Consistent error response format
+- Async routes wrapped with `asyncHandler`
+- WebSocket errors emitted as structured events
+
+## Engineering Decisions
+
+- Stateless JWT authentication
+- In-memory session for real-time performance
+- MongoDB writes deferred until session completion
+- `$addToSet` used to prevent duplicate enrollments
+- TypeScript strict mode for safety and correctness
+
+## Getting Started
+
+### Environment Variables
 
 ```env
 PORT=8080
@@ -106,92 +173,36 @@ DBNAME=attendance
 JWTSECRET=your_jwt_secret
 ```
 
----
+### Clone the Repository
 
-## ▶️ Running the Project
+```bash
+git clone <Repository_url>
+cd live-attendance-system
+```
 
-### Install dependencies
+### Install & Run
 
 ```bash
 pnpm install
-```
-
-### Development mode
-
-```bash
 pnpm run dev
 ```
 
-### Build
+<!-- ## 📈 Future Enhancements
 
-```bash
-pnpm run build
-```
+* Redis-backed attendance sessions
+* Multiple concurrent sessions
+* Refresh tokens
+* Attendance history & analytics
+* Pagination & filtering
+* Automated testing
+* Horizontal scaling support
 
-### Production
-
-```bash
-pnpm start
-```
-
----
-
-## 📌 API Endpoints (Sample)
-
-### Auth
-
-- `POST /auth/signup`
-- `POST /auth/login`
-
-### User
-
-- `GET /users/students` → (Teacher only)
-- `GET /users/me`
-
-### Class
-
-- `POST /class` → Create class (Teacher)
-- `GET /class/:id` → Teacher (owner) or Student (enrolled)
-- `POST /class/:id/add-student` → Teacher (owner)
-
----
-
-## 🛡️ Error Handling
-
-- All async routes are wrapped using `asyncHandler`
-- Custom `AppError` class for operational errors
-- Global error-handling middleware
-
----
-
-## 🧠 Design Decisions
-
-- **Stateless authentication** using JWT
-- **Authorization is resource-based**, not token-based
-- **No DB lookup on every request** unless required
-- MongoDB `$addToSet` used to prevent duplicate student enrollment
-- Schema-level and route-level validation
-
----
-
-## 📈 Future Improvements
-
-- Refresh token support
-- Pagination & filtering
-- Admin role
-- Attendance tracking per class session
-- Redis caching
-- Unit & integration tests
-
----
+--- -->
 
 ## 👨‍💻 Author
 
 **Ravindra Yadav**
-
-- (`https://github.com/Ryadav0654`)
-
----
+GitHub: [https://github.com/Ryadav0654](https://github.com/Ryadav0654)
 
 ## 📄 License
 

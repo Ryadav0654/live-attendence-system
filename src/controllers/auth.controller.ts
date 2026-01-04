@@ -8,7 +8,7 @@ import User from "../models/user.model.js";
 import { AppError } from "../utils/appError.js";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
-import type { IRequest } from "../middleware/verifyToken.js";
+import type { IRequest } from "../types/type.js";
 
 export const signUpController = asyncHandler(
   async (req: Request, res: Response) => {
@@ -52,7 +52,6 @@ export const loginController = asyncHandler(
     const { email, password } = loginZodSchema.parse(req.body);
 
     const user = await User.findOne({ email }).select("+password");
-    console.log(user);
     if (!user) {
       return res.status(401).json({
         success: false,

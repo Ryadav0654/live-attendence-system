@@ -1,17 +1,7 @@
 import mongoose, { Document, Schema, model } from "mongoose";
 import bcrypt from "bcryptjs";
-
-export enum ROLE {
-  TEACHER = "teacher",
-  STUDENT = "student",
-}
-
-export interface IUser {
-  name: string;
-  email: string;
-  password: string;
-  role: ROLE;
-}
+import type { IUser } from "../types/type.js";
+import { ROLE } from "../types/type.js";
 
 const userSchema = new Schema<IUser>(
   {
