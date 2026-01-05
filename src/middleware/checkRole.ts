@@ -7,7 +7,7 @@ import { ROLE } from "../types/type.js";
 export const isTeacher = asyncHandler(
   async (req: IRequest, _res: Response, next: NextFunction) => {
     if (!req.user || req.user.role !== ROLE.TEACHER) {
-      throw new AppError("Forbidden", 403);
+      throw new AppError("Forbidden, teacher access required", 403);
     }
 
     next();

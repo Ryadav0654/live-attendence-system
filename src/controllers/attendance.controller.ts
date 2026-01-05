@@ -12,7 +12,7 @@ export const startAttendance = asyncHandler(
     const teacherId = req.user.userId;
     const { success, data } = attendanceZodSchema.safeParse(req.body);
 
-    if (!success) {
+    if (!success || !data.classId) {
       return res.status(400).json({
         success: false,
         error: "Invalid request schema",

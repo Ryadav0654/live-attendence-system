@@ -12,8 +12,14 @@ import type { IRequest } from "../types/type.js";
 
 export const signUpController = asyncHandler(
   async (req: Request, res: Response) => {
-    const { name, email, role, password } = signUpZodSchema.parse(req.body);
-
+    const { data, success } = signUpZodSchema.safeParse(req.body);
+    if (!success) {
+      return res.status(400).json({
+        success: false,
+        error: "Invalid request schema",
+      });
+    }
+    const { name, email, role, password } = data;
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({
@@ -49,11 +55,18 @@ export const signUpController = asyncHandler(
 
 export const loginController = asyncHandler(
   async (req: Request, res: Response) => {
-    const { email, password } = loginZodSchema.parse(req.body);
+    const { data, success } = loginZodSchema.safeParse(req.body);
+    if (!success) {
+      return res.status(400).json({
+        success: false,
+        error: "Invalid request schema",
+      });
+    }
+    const { email, password } = data;
 
     const user = await User.findOne({ email }).select("+password");
     if (!user) {
-      return res.status(401).json({
+      return res.status(400).json({
         success: false,
         message: "Invalid email or password",
       });
@@ -61,7 +74,7 @@ export const loginController = asyncHandler(
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return res.status(401).json({
+      return res.status(400).json({
         success: false,
         message: "Invalid email or password",
       });
@@ -87,7 +100,7 @@ export const loginController = asyncHandler(
 export const userController = asyncHandler(
   async (req: IRequest, res: Response) => {
     if (!req.user) {
-      throw new AppError("Unauthorized", 401);
+      throw new AppError("Unauthorized, token missing or invalid", 401);
     }
 
     const user = await User.findById(req.user.userId).select("-password -__v");

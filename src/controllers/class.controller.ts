@@ -7,12 +7,19 @@ import { AppError } from "../utils/appError.js";
 import z from "zod";
 import User from "../models/user.model.js";
 import Attendance from "../models/attendance.model.js";
-import { Types } from "mongoose";
+import mongoose, { Types } from "mongoose";
 import { ROLE } from "../types/type.js";
 
 export const createClass = asyncHandler(
   async (req: IRequest, res: Response) => {
-    const { className } = createClassZodSchema.parse(req.body);
+    const { data, success } = createClassZodSchema.safeParse(req.body);
+    if (!success) {
+      return res.status(400).json({
+        success: false,
+        error: "Invalid request schema",
+      });
+    }
+    const { className } = data;
     const teacherId = req.user?.userId!;
 
     const createdClass = await Class.create({
@@ -31,21 +38,33 @@ export const addStudentInClass = asyncHandler(
   async (req: IRequest, res: Response) => {
     const classId = req.params.id;
 
-    const { studentId } = z
+    const { data, success } = z
       .object({
         studentId: z.string(),
       })
-      .parse(req.body);
+      .safeParse(req.body);
 
-    const student = await User.findById(studentId);
-    if (!student || student.role !== ROLE.STUDENT) {
-      throw new AppError("Invalid student", 400);
+    if (!success) {
+      return res.status(400).json({
+        success: false,
+        error: "Invalid request schema",
+      });
+    }
+    const { studentId } = data;
+
+    const student = await User.findOne({
+      _id: new mongoose.Types.ObjectId(studentId),
+      role: ROLE.STUDENT,
+    });
+
+    if (!student) {
+      throw new AppError("Student not found", 404);
     }
 
     const updatedClass = await Class.findOneAndUpdate(
       {
-        _id: classId,
-        teacherId: req.user.userId,
+        _id: new mongoose.Types.ObjectId(classId),
+        teacherId: new mongoose.Types.ObjectId(req.user.userId),
       },
       { $addToSet: { studentIds: student._id } },
       { new: true }
