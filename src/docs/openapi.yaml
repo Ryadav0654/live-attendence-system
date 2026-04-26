@@ -1,0 +1,195 @@
+openapi: 3.0.3
+info:
+  title: Live Attendance System API
+  version: 1.0.0
+  description: REST API for attendance system with JWT auth + WebSocket support
+
+servers:
+  - url: http://localhost:3000
+
+tags:
+  - name: Auth
+  - name: Class
+  - name: Students
+  - name: Attendance
+
+paths:
+  /:
+    get:
+      summary: Health check
+      responses:
+        200:
+          description: Server running
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Login user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+      responses:
+        200:
+          description: JWT token
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: Register user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, email, password, role]
+              properties:
+                name:
+                  type: string
+                email:
+                  type: string
+                password:
+                  type: string
+                role:
+                  type: string
+                  enum: [TEACHER, STUDENT]
+      responses:
+        201:
+          description: User created
+
+  /class:
+    get:
+      tags: [Class]
+      security:
+        - bearerAuth: []
+      summary: Get all classes
+      responses:
+        200:
+          description: List of classes
+
+    post:
+      tags: [Class]
+      security:
+        - bearerAuth: []
+      summary: Create class
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name:
+                  type: string
+      responses:
+        201:
+          description: Class created
+
+  /students:
+    get:
+      tags: [Students]
+      security:
+        - bearerAuth: []
+      summary: Get all students
+      responses:
+        200:
+          description: List of students
+
+  /attendance/start:
+    post:
+      tags: [Attendance]
+      security:
+        - bearerAuth: []
+      summary: Start attendance session
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [classId]
+              properties:
+                classId:
+                  type: string
+      responses:
+        200:
+          description: Session started
+
+  /attendance/stop:
+    post:
+      tags: [Attendance]
+      security:
+        - bearerAuth: []
+      summary: Stop attendance session
+      responses:
+        200:
+          description: Session stopped
+
+    # 🔌 WebSocket Documentation (IMPORTANT)
+  /ws:
+    get:
+      summary: WebSocket connection
+      description: |
+        Connect using:
+        ws://localhost:3000?token=JWT_TOKEN
+
+        Events:
+
+        1. ATTENDANCE_MARKED (TEACHER)
+        {
+          "event": "ATTENDANCE_MARKED",
+          "data": {
+            "studentId": "string",
+            "status": "PRESENT | ABSENT"
+          }
+        }
+
+        2. TODAY_SUMMARY
+        3. MY_ATTENDANCE
+        4. DONE
+
+      responses:
+        101:
+          description: Switching Protocols (WebSocket upgrade)
+
+        400:
+          description: Invalid request
+
+        401:
+          description: Unauthorized (invalid or missing token)
+        403:
+          description: Forbidden (not a teacher)
+        500:
+          description: Internal server error
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer

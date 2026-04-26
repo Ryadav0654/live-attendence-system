@@ -6,6 +6,13 @@ import verifyToken from "./middleware/verifyToken.js";
 import { WebSocketServer } from "ws";
 import { createServer } from "node:http";
 import jwt, { type JwtPayload } from "jsonwebtoken";
+import * as OpenApiValidator from "express-openapi-validator";
+import swaggerUi from "swagger-ui-express";
+import fs from "fs";
+import yaml from "yaml";
+
+const file = fs.readFileSync("./src/docs/openapi.yaml", "utf8");
+const openapi = yaml.parse(file);
 
 const app: Express = express();
 
@@ -13,6 +20,15 @@ const server = createServer(app);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(logger);
+
+app.use("/docs", swaggerUi.serve, swaggerUi.setup(openapi));
+app.use(
+  OpenApiValidator.middleware({
+    apiSpec: "./src/docs/openapi.yaml",
+    validateRequests: true, // (default)
+    // validateResponses: true, // false by default
+  }),
+);
 
 const wss = new WebSocketServer({ server });
 
@@ -52,7 +68,7 @@ const sendError = (socket: AuthenticatedSocket, message: string) => {
     JSON.stringify({
       event: "ERROR",
       data: { message },
-    })
+    }),
   );
 };
 
@@ -128,11 +144,11 @@ wss.on("connection", (socket: AuthenticatedSocket, request) => {
         const values = Object.values(session.attendance);
 
         const present = values.filter(
-          (status) => status === STATUS.PRESENT
+          (status) => status === STATUS.PRESENT,
         ).length;
 
         const absent = values.filter(
-          (status) => status === STATUS.ABSENT
+          (status) => status === STATUS.ABSENT,
         ).length;
 
         brodCast({
@@ -164,7 +180,7 @@ wss.on("connection", (socket: AuthenticatedSocket, request) => {
             data: {
               status: status,
             },
-          })
+          }),
         );
         break;
       }
@@ -179,7 +195,7 @@ wss.on("connection", (socket: AuthenticatedSocket, request) => {
           return;
         }
         const foundClass = await Class.findById(
-          new mongoose.Types.ObjectId(session.classId)
+          new mongoose.Types.ObjectId(session.classId),
         )
           .select("-__v")
           .populate("studentIds", "_id");
@@ -196,17 +212,17 @@ wss.on("connection", (socket: AuthenticatedSocket, request) => {
               studentId: student._id,
               status:
                 session.attendance[student._id.toString()] ?? STATUS.ABSENT,
-            })
-          )
+            }),
+          ),
         );
         const values = Object.values(session.attendance);
 
         const present = values.filter(
-          (status) => status === STATUS.PRESENT
+          (status) => status === STATUS.PRESENT,
         ).length;
 
         const absent = values.filter(
-          (status) => status === STATUS.ABSENT
+          (status) => status === STATUS.ABSENT,
         ).length;
 
         activeSession.clearSession();
