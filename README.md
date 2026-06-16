@@ -1,4 +1,5 @@
-# Live Attendance System – Backend
+# Live Attendance System – Backend 
+[![Better Stack Badge](https://uptime.betterstack.com/status-badges/v3/monitor/2krby.svg)](https://uptime.betterstack.com/?utm_source=status_badge)
 
 > A **secure, real-time backend system** for managing live classroom attendance, built with **Node.js, Express, TypeScript, MongoDB, JWT**, and **WebSockets**.
 
@@ -187,7 +188,7 @@ pnpm install
 pnpm run dev
 ```
 
-<!-- ## 📈 Future Enhancements
+<!-- ## Future Enhancements
 
 * Redis-backed attendance sessions
 * Multiple concurrent sessions
@@ -199,11 +200,8 @@ pnpm run dev
 
 --- -->
 
-## 👨‍💻 Author
+##  Author
 
 **Ravindra Yadav**
 GitHub: [https://github.com/Ryadav0654](https://github.com/Ryadav0654)
 
-## 📄 License
-
-MIT License
