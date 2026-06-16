@@ -8,11 +8,12 @@ import User from "../models/user.model.js";
 import { AppError } from "../utils/appError.js";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
-import type { IRequest } from "../types/type.js";
+import type { IRequest, ROLE } from "../types/type.js";
 
 export const signUpController = asyncHandler(
   async (req: Request, res: Response) => {
-    const { data, success } = signUpZodSchema.safeParse(req.body);
+    const { data, error, success } = signUpZodSchema.safeParse(req.body);
+
     if (!success) {
       return res.status(400).json({
         success: false,
@@ -20,6 +21,7 @@ export const signUpController = asyncHandler(
       });
     }
     const { name, email, role, password } = data;
+    console.log("before findOne");
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({
@@ -32,7 +34,7 @@ export const signUpController = asyncHandler(
       name: name,
       email: email,
       password: password,
-      role: role,
+      role: role as ROLE,
     });
 
     if (!user) {
@@ -40,7 +42,7 @@ export const signUpController = asyncHandler(
     }
 
     const newUser = {
-      _id: user._id,
+      id: user._id,
       email: user.email,
       name: user.name,
       role: user.role,
@@ -50,7 +52,7 @@ export const signUpController = asyncHandler(
       success: true,
       data: newUser,
     });
-  }
+  },
 );
 
 export const loginController = asyncHandler(
@@ -87,14 +89,14 @@ export const loginController = asyncHandler(
     const token = jwt.sign(
       { userId: user._id.toString(), role: user.role },
       process.env.JWTSECRET,
-      { expiresIn: "7d" }
+      { expiresIn: "7d" },
     );
 
     return res.status(200).json({
       success: true,
       data: { token },
     });
-  }
+  },
 );
 
 export const userController = asyncHandler(
@@ -113,5 +115,5 @@ export const userController = asyncHandler(
       success: true,
       data: user,
     });
-  }
+  },
 );

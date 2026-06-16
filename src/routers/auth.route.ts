@@ -7,7 +7,7 @@ import {
 import verifyToken from "../middleware/verifyToken.js";
 const router: Router = Router();
 
-router.post("/signup", signUpController);
+router.post("/register", signUpController);
 router.post("/login", loginController);
 router.get("/me", verifyToken, userController);
 

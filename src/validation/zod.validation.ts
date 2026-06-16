@@ -1,10 +1,10 @@
 import z from "zod";
-
+import { ROLE } from "../types/type.js";
 export const signUpZodSchema = z.object({
   name: z.string(),
   email: z.email(),
   password: z.string().min(6, "password must be greater than 6 charaters!"),
-  role: z.literal(["teacher", "student"]),
+  role: z.enum(ROLE),
 });
 
 export const loginZodSchema = z.object({

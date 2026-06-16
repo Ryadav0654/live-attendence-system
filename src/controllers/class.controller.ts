@@ -12,13 +12,15 @@ import { ROLE } from "../types/type.js";
 
 export const createClass = asyncHandler(
   async (req: IRequest, res: Response) => {
-    const { data, success } = createClassZodSchema.safeParse(req.body);
+    const { data, error, success } = createClassZodSchema.safeParse(req.body);
+
     if (!success) {
       return res.status(400).json({
         success: false,
         error: "Invalid request schema",
       });
     }
+
     const { className } = data;
     const teacherId = req.user?.userId!;
 
@@ -31,7 +33,7 @@ export const createClass = asyncHandler(
       success: true,
       data: createdClass,
     });
-  }
+  },
 );
 
 export const addStudentInClass = asyncHandler(
@@ -63,11 +65,11 @@ export const addStudentInClass = asyncHandler(
 
     const updatedClass = await Class.findOneAndUpdate(
       {
-        _id: new mongoose.Types.ObjectId(classId),
+        _id: new mongoose.Types.ObjectId(classId as string),
         teacherId: new mongoose.Types.ObjectId(req.user.userId),
       },
       { $addToSet: { studentIds: student._id } },
-      { new: true }
+      { new: true },
     );
 
     if (!updatedClass) {
@@ -78,7 +80,7 @@ export const addStudentInClass = asyncHandler(
       success: true,
       data: updatedClass,
     });
-  }
+  },
 );
 
 export const getClass = asyncHandler(async (req: IRequest, res: Response) => {
@@ -120,7 +122,7 @@ export const getClassAttendance = asyncHandler(
     const { userId } = req.user;
 
     const attendance = await Attendance.findOne({
-      classId: new Types.ObjectId(classId),
+      classId: new Types.ObjectId(classId as string),
       studentId: new Types.ObjectId(userId),
     }).select("-__v");
 
@@ -135,7 +137,6 @@ export const getClassAttendance = asyncHandler(
       });
     }
 
-    // ✅ Attendance exists
     return res.status(200).json({
       success: true,
       data: {
@@ -143,5 +144,5 @@ export const getClassAttendance = asyncHandler(
         status: attendance.status,
       },
     });
-  }
+  },
 );
